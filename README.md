@@ -13,7 +13,8 @@ Tip: All rename operations, diff-changes, or errors should be logged in the cons
 
 ## Demo
 
-![attachments-md5-renamer-demo](./assets/2025-02-05T222517-obsidian-attachments-md5-renamer-demo.mp4)
+https://github.com/user-attachments/assets/17165d3a-0d71-4e43-a4fe-a2eca8130c40
+
 
 
 
