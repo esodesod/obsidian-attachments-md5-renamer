@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "attachments-md5-renamer",
+	"name": "Attachments MD5 Renamer",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
+	"description": "An Obsidian plugin that renames attachments in the current note to their MD5 hash",
+	"author": "Espen Ødegaard",
+	"authorUrl": "https://github.com/esodesod/obsidian-attachments-md5-renamer",
 	"fundingUrl": "https://obsidian.md/pricing",
 	"isDesktopOnly": false
 }
