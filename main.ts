@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
+import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 
 import md5 from "md5";
 
@@ -31,14 +31,12 @@ export default class RenameAttachmentsToMD5Plugin extends Plugin {
 		const attachmentRegex = /!\[\[([^|\]]+)(?:\|.*)?\]\]|!\[.*?\]\((.*?)\)/g;
 		let match;
 		let updatedContent = content;
-		let attachmentsFound = false;
 
 		while ((match = attachmentRegex.exec(content)) !== null) {
-			attachmentsFound = true;
 			const attachmentPath = match[1] || match[2];
 			console.log("Found attachment link:", attachmentPath);
 
-			let attachmentFile = this.app.metadataCache.getFirstLinkpathDest(attachmentPath, file.path);
+			const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(attachmentPath, file.path);
 
 			if (attachmentFile instanceof TFile) {
 				console.log("Located attachment file in vault:", attachmentFile.path);
