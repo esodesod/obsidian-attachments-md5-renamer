@@ -1,134 +1,84 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 
-// Remember to rename these classes and interfaces!
+import md5 from "md5";
 
-interface MyPluginSettings {
-	mySetting: string;
+async function computeMD5(buffer: ArrayBuffer): Promise<string> {
+	return md5(new Uint8Array(buffer)); // Convert buffer to Uint8Array and hash it
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-
+export default class RenameAttachmentsToMD5Plugin extends Plugin {
 	async onload() {
-		await this.loadSettings();
-
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
+			id: "rename-attachments-to-md5",
+			name: "Rename attachments in current note to MD5 hash",
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
+				await this.renameAttachmentsInCurrentNote(editor, view);
+			},
+		});
+	}
+
+	async renameAttachmentsInCurrentNote(editor: Editor, view: MarkdownView) {
+		const file = view.file;
+		if (!file) {
+			new Notice("No active file found.");
+			console.log("No active file found.");
+			return;
+		}
+
+		const content = editor.getValue();
+		//console.log("DEBUG: Current note content:", content);
+
+		const attachmentRegex = /!\[\[([^|\]]+)(?:\|.*)?\]\]|!\[.*?\]\((.*?)\)/g;
+		let match;
+		let updatedContent = content;
+		let attachmentsFound = false;
+
+		while ((match = attachmentRegex.exec(content)) !== null) {
+			attachmentsFound = true;
+			const attachmentPath = match[1] || match[2];
+			console.log("Found attachment link:", attachmentPath);
+
+			let attachmentFile = this.app.metadataCache.getFirstLinkpathDest(attachmentPath, file.path);
+
+			if (attachmentFile instanceof TFile) {
+				console.log("Located attachment file in vault:", attachmentFile.path);
+				const attachmentData = await this.app.vault.readBinary(attachmentFile);
+				const md5Hash = await computeMD5(attachmentData);
+				const newFileName = `${md5Hash}.${attachmentFile.extension}`;
+
+				if (newFileName !== attachmentFile.name) {
+					const newPath = `${attachmentFile.parent?.path}/${newFileName}`.replace('//', '/');
+					console.log(`Renaming ${attachmentFile.path} to ${newPath}`);
+					await this.app.vault.rename(attachmentFile, newPath);
+					// Update the link to include only the new filename
+					updatedContent = updatedContent.replace(attachmentPath, newFileName);
+				} else {
+					console.log("attachment already named correctly, skipping:", attachmentFile.path);
+				}
+			} else {
+				console.log("Could not locate attachment file for:", attachmentPath);
 			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+		}
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+		if (updatedContent !== content) {
+			editor.setValue(updatedContent);
+			new Notice("Attachments renamed to MD5 hash.");
+
+			console.log("Updated note content (diff):");
+
+			// Output the changes in a diff-like format
+			const contentLines = content.split('\n');
+			const updatedContentLines = updatedContent.split('\n');
+
+			for (let i = 0; i < contentLines.length; i++) {
+				if (contentLines[i] !== updatedContentLines[i]) {
+					console.log(`- ${contentLines[i]}`);
+					console.log(`+ ${updatedContentLines[i]}`);
 				}
 			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
-
-	onunload() {
-
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+		} else {
+			new Notice("No attachments found or renamed.");
+			console.log("No attachments found or renamed.");
+		}
 	}
 }

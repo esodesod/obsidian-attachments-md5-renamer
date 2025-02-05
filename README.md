@@ -49,6 +49,7 @@ Quick starting guide for new plugin devs:
 - Clone this repo.
 - Make sure your NodeJS is at least v16 (`node --version`).
 - `npm i` or `yarn` to install dependencies.
+- `npm i --save-dev @types/md5` for the MD5
 - `npm run dev` to start compilation in watch mode.
 
 ## Manually installing the plugin
