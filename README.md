@@ -1,16 +1,21 @@
-# Obsidian Sample Plugin
+# Obsidian Attachments MD5 Renamer
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+This is a plugin for [Obsidian](https://obsidian.md) that renames attachments in the current note to their MD5 hash.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Usage
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- Install this plugin
+- Add attachment to a note
+- Using command palette, run ""
+- Attachments should now be renamed to their MD5 hash
+
+Tip: All rename operations, diff-changes, or errors should be logged in the console (Developer Tools > Console).
+
+## Demo
+
+![attachments-md5-renamer-demo](./assets/2025-02-05T222517-obsidian-attachments-md5-renamer-demo.mp4)
+
+
 
 ## First time developing plugins?
 
